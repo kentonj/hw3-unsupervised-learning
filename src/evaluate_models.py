@@ -207,7 +207,7 @@ def run_feature_selection(id, train_dataset, test_dataset, param_variations=None
         print('working on Random Forest feature selection')
         rffs_model = RandomForestClassifier(n_estimators=100,class_weight='balanced',random_state=5,n_jobs=7)
         feature_importances = rffs_model.fit(train_dataset.data,train_dataset.target).feature_importances_ 
-        rev_sort_arg_indices = np.argsort(kurtosis_score_for_all_components)[::-1]
+        rev_sort_arg_indices = np.argsort(feature_importances)[::-1]
         rev_sorted_feature_importances = feature_importances[rev_sort_arg_indices]
 
         n_components = np.linspace(1,rev_sorted_feature_importances.shape[0],rev_sorted_feature_importances.shape[0])
