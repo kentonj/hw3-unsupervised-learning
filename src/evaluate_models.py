@@ -30,7 +30,7 @@ DATASETS = ('aps', 'spam') #any of of ('spam', 'aps')
 
 RANDOM_STATE = 27
 PLOT_ACTION = None # (None, 'save', 'show') - default to None to avoid issues with matplotlib depending on OS
-N_EPOCHS = 1000 # maximum number of epochs for neural network training
+N_EPOCHS = 10000 # maximum number of epochs for neural network training
 N_ITER_ICA = 1000 #max number of iterations for ICA before stopping
 N_CLUSTERS = 30 #max number of clusters to try for part 1 of homework
 BALANCE_METHOD = 'downsample' # (int, 'downsample' or 'upsample') for training data
@@ -88,6 +88,10 @@ def run_cluster_variations(id, train_dataset, test_dataset, clustering_model_lis
             model_list.append(algo)
         print('')
 
+        max_index = np.argmax(test_homogeneity_list)
+        max_value = test_homogeneity_list[max_index]
+        print('best homogeneity: {:.2f} achieved using {} with {}'.format(max_value, clustering_model.upper(), clustering_model_list[max_index]))
+
         cluster_models_dict[clustering_model] = {'model_list':model_list, 
                                                 'cluster_list':cluster_list, 
                                                 'train_homogeneity_list':train_homogeneity_list, 
@@ -144,7 +148,12 @@ def run_feature_selection(id, train_dataset, test_dataset, param_variations=None
                                     'title':'PCA',
                                     'ylabel':'Variance',
                                     'xlabel':'Components'}
-    
+        
+        max_index = np.argmax(pca_variance)
+        max_value = pca_variance[max_index]
+        print('PCA - highest variance: {:.2f}'.format(max_value))
+
+        
     if 'ica' in models_to_run:
         ica_model = FastICA(max_iter=N_ITER_ICA, tol=0.0001, random_state=RANDOM_STATE)
         # THIS THREW AN ERROR ABOUT NaNs once
@@ -173,6 +182,8 @@ def run_feature_selection(id, train_dataset, test_dataset, param_variations=None
                                     'title':'ICA',
                                     'ylabel':'Kurtosis',
                                     'xlabel':'Components'}
+        
+        print('ICA - highest kurtosis: {:.2f}'.format(rev_sorted_kurtosis_score[0]))
 
     if 'srp' in models_to_run:
         srp_x_data_list = []
@@ -201,6 +212,7 @@ def run_feature_selection(id, train_dataset, test_dataset, param_variations=None
                                     'ylabel':'Kurtosis',
                                     'xlabel':'Components'}
         print('')
+        print('SRP - highest kurtosis: {:.2f}'.format(rev_sorted_kurtosis_score[0]))
                 
     if 'rffs' in models_to_run:
         # random forest feature selection
@@ -221,6 +233,8 @@ def run_feature_selection(id, train_dataset, test_dataset, param_variations=None
                                     'title':'RF',
                                     'ylabel':'Feature Importance',
                                     'xlabel':'Components'}
+                                    
+        print('RFFS - highest feature importance: {:.2f}'.format(rev_sorted_feature_importances[0]))
 
     accumulate_subplots(subplot_shape=(1,4), 
                         subplot_dict=fs_details, 
@@ -242,7 +256,9 @@ def plot_feature_srp_reconstruction(id, train_dataset, n_component_ratio_list=np
         recon_error = reconstructionError(fs_algo, train_dataset.data)
         recon_error_list.append(recon_error)
     recon_error_dict = {'x':n_components_list,'y':recon_error_list}
-                           
+
+    print('SRP - highest reconstruction error: {:.4f}'.format(np.max(recon_error_list)))
+
     gen_plot(x_data=recon_error_dict['x'], 
             y_data=recon_error_dict['y'],
             title_name='Randomized Projection - Reconstruction Error',
@@ -394,6 +410,7 @@ def cluster_2d_by_feature_selection(id, fs_algo_dict, cluster_algo_list, train_d
 def run_neural_network_no_feature_selection(id, nn_model, train_dataset, test_dataset, label_encoder):
     nn_model.fit(train_dataset.data, train_dataset.target)
     predictions = nn_model.predict(test_dataset.data)
+    print('neural network with no feature selection - ROC-AUC: {:.2f}'.format(roc_auc_score(test_dataset.target, predictions)))
 
     n_iters = list([i for i in range(nn_model.n_iter_)])
     train_scores = nn_model.loss_curve_
@@ -456,11 +473,14 @@ def run_neural_network_with_feature_selection(id, nn_model, fs_algo_dict, train_
         nn_details = {}
         component_variation_dict = {}
         for j, n_components in enumerate(n_component_list):
+
+            
             selected_fs_training_data = fs_sorted_training_data[:,:n_components]
             selected_fs_testing_data = fs_sorted_testing_data[:,:n_components]
             
             nn_model.fit(selected_fs_training_data, train_dataset.target)
             predictions = nn_model.predict(selected_fs_testing_data)
+            print('neural network trained with {} - {}-components - ROC-AUC: {:.2f}'.format(fs_name.upper(), n_components, roc_auc_score(test_dataset.target, predictions)))
 
             train_scores = nn_model.loss_curve_
             val_scores = nn_model.validation_scores_
@@ -535,6 +555,7 @@ def kmeans_learning_curve(nn_model, train_dataset, test_dataset, cluster_type='k
 
         test_roc_auc = roc_auc_score(test_dataset.target, test_predictions)
         test_roc_auc_list.append(test_roc_auc)
+        print('neural network trained with {} - {}-clusters - ROC-AUC: {:.2f}'.format(cluster_type.upper(), cluster_size, test_roc_auc))
 
         cm = confusion_matrix(test_dataset.target,test_predictions)
         normalized_cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
