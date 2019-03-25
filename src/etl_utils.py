@@ -27,54 +27,6 @@ class Dataset(object):
     def __str__(self):
         return ('first 10 data points\n' + str(self.data.head(10)) + '\nfirst 10 labels\n' + str(self.target.head(10)) + '\n')
 
-class MachineLearningModel(object):
-    '''
-    this is to help separate models by attributes, i.e. IDs to keep track of many models being trained in one batch
-    '''
-    def __init__(self, model, model_family, model_type, framework, nn=False, id=None):
-        self.model = model
-        self.framework = framework
-        self.model_family = model_family
-        self.model_type = model_type
-        self.nn = nn
-        self.train_sizes = None
-        self.train_scores = None
-        self.val_scores = None
-        self.cm = None
-        self.train_cluster_assign = None
-        self.train_cluster_proba = None
-        self.train_homogeneity = None
-        self.test_cluster_assign = None
-        self.test_cluster_proba = None
-        self.test_homogeneity = None
-        if id:
-            self.id = id #set as id if provided
-        else:
-            self.id = int(datetime.datetime.now().strftime("%Y%m%d%H%M%S")) #otherwise set id to time right now
-    def set_training_time(self, training_time):
-        self.training_time = round(training_time,4) #training time rounded to 4 decimals
-    def set_evaluation_time(self, evaluation_time):
-        self.evaluation_time = round(evaluation_time,4) #training time rounded to 4 decimals
-    def get_train_sizes(self):
-        return self.train_sizes
-    def get_train_scores(self):
-        if self.model_family != 'NeuralNetwork':
-            return np.mean(self.train_scores, axis=1)
-        else:
-            return self.train_scores
-    def get_validation_scores(self):
-        if self.model_family != 'NeuralNetwork':
-            return np.mean(self.val_scores, axis=1)
-        else:
-            return self.val_scores
-    def get_cm(self):
-        return self.cm
-    def get_normalized_cm(self):
-        return self.cm.astype('float') / self.cm.sum(axis=1)[:, np.newaxis]
-    def __str__(self):
-        return 'MODEL DETAILS: ' + self.model_type + ' model from ' + self.framework + ' with ID: ' + str(self.id)
-
-
 def clean_and_scale_dataset(dirty_df_dict, na_action='mean', scaler=None, class_col='class'):
     
     clean_df_list = []
@@ -156,28 +108,3 @@ def prep_data(df_dict, shuffle_data=True, balance_method='downsample', class_col
         prepped_df_list.append(dataset_df)
 
     return prepped_df_list, encoder
-
-def pickle_save_model(algo, model_folder='models'):
-    '''
-    save the model with datetime if with_datetime=True, which will save model_20190202122930
-    '''
-    if not os.path.exists(model_folder):
-        os.makedirs(model_folder)
-
-    filename = model_folder+'/'+str(algo.model_type)+'.model'
-    print(f'saving as file: {filename}')
-    pickle.dump(algo, open(filename, 'wb'))
-    return None
-
-def pickle_load_model(model_path):
-    '''
-    if no model_full_path is provided, then assume that we are looking for the most recent model
-    model type can also be specified to retrieve the most recent model of a current type
-    '''
-    try:
-        model = pickle.load(open(model_path, 'rb'))
-        print('model successfully loaded from: {}'.format(model_path))
-        return model
-    except:
-        print('did not successfully load model from: {}'.format(model_path))
-        FileNotFoundError('model file not found')
