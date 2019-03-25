@@ -30,9 +30,9 @@ DATASETS = ('aps', 'spam') #any of of ('spam', 'aps')
 
 RANDOM_STATE = 27
 PLOT_ACTION = None # (None, 'save', 'show') - default to None to avoid issues with matplotlib depending on OS
-N_EPOCHS = 10 # maximum number of epochs for neural network training
-N_ITER_ICA = 10 #max number of iterations for ICA before stopping
-N_CLUSTERS = 5 #max number of clusters to try for part 1 of homework
+N_EPOCHS = 1000 # maximum number of epochs for neural network training
+N_ITER_ICA = 1000 #max number of iterations for ICA before stopping
+N_CLUSTERS = 30 #max number of clusters to try for part 1 of homework
 BALANCE_METHOD = 'downsample' # (int, 'downsample' or 'upsample') for training data
 
 
