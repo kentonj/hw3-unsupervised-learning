@@ -68,7 +68,9 @@ def run_cluster_variations(id, train_dataset, test_dataset, clustering_model_lis
         train_homogeneity_list = []
         test_homogeneity_list = []
         model_list = []
+        num_cluster_list = []
         for num_cluster, algo in kmeans_models.items():
+            
             algo_start_time = time.time()
             algo.fit(train_dataset.data)
             algo_elapsed_time = round(time.time() - algo_start_time,2)
@@ -77,7 +79,8 @@ def run_cluster_variations(id, train_dataset, test_dataset, clustering_model_lis
                 algo.train_cluster_assign = algo.labels_
             elif clustering_model == 'em':
                 algo.train_cluster_assign = algo.predict(train_dataset.data)
-            
+
+            num_cluster_list.append(num_cluster)
             algo.train_homogeneity = homogeneity_score(train_dataset.target, algo.train_cluster_assign)
             train_homogeneity_list.append(algo.train_homogeneity)
 
@@ -88,9 +91,10 @@ def run_cluster_variations(id, train_dataset, test_dataset, clustering_model_lis
             model_list.append(algo)
         print('')
 
-        max_index = np.argmax(test_homogeneity_list)
+        max_index = np.argmax(test_homogeneity_list)[0]
         max_value = test_homogeneity_list[max_index]
-        print('best homogeneity: {:.2f} achieved using {} with {}'.format(max_value, clustering_model.upper(), clustering_model_list[max_index]))
+        best_cluster = num_cluster_list[max_index]
+        print('best homogeneity: {:.2f} achieved using {} with {}'.format(max_value, clustering_model.upper(), best_cluster))
 
         cluster_models_dict[clustering_model] = {'model_list':model_list, 
                                                 'cluster_list':cluster_list, 
@@ -149,7 +153,7 @@ def run_feature_selection(id, train_dataset, test_dataset, param_variations=None
                                     'ylabel':'Variance',
                                     'xlabel':'Components'}
         
-        max_index = np.argmax(pca_variance)
+        max_index = np.argmax(pca_variance)[0]
         max_value = pca_variance[max_index]
         print('PCA - highest variance: {:.2f}'.format(max_value))
 
@@ -584,7 +588,7 @@ def run_neural_network_with_clustering(id, nn_model, clustering_algo_list, train
         if cluster_size_for_cm is not None:
             cm_index = not_appended_cluster_list[np.where(not_appended_cluster_list == cluster_size_for_cm)][0]
         else:
-            cm_index = np.argmax(not_appended_test_list)
+            cm_index = np.argmax(not_appended_test_list)[0]
 
         cluster_details[0,1] = {'type':'cm', 
                                 'cm':not_appended_norm_cm[cm_index],
@@ -610,7 +614,7 @@ def run_neural_network_with_clustering(id, nn_model, clustering_algo_list, train
         if cluster_size_for_cm is not None:
             cm_index = not_appended_cluster_list[np.where(not_appended_cluster_list == cluster_size_for_cm)][0]
         else:
-            cm_index = np.argmax(appended_test_list)
+            cm_index = np.argmax(appended_test_list)[0]
 
         cluster_details[1,1] = {'type':'cm', 
                                 'cm':appended_norm_cm[cm_index],
